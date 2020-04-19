@@ -20,8 +20,11 @@ class DeviceRegistry {
   async allocateDevice(getDeviceId) {
     return this._lockfile.exclusively(async () => {
       const deviceId = await safeAsync(getDeviceId);
-      this._toggleDeviceStatus(deviceId, true);
-      return deviceId;
+      const newState = this._toggleDeviceStatus(deviceId, true);
+      return {
+        deviceId,
+        deviceIndex: newState.length - 1,
+      };
     });
   }
 
@@ -49,6 +52,7 @@ class DeviceRegistry {
 
   /***
    * @private
+   * @returns {Array}
    */
   _toggleDeviceStatus(deviceId, busy) {
     const state = this._lockfile.read();
@@ -58,6 +62,8 @@ class DeviceRegistry {
       : _.without(state, deviceId);
 
     this._lockfile.write(newState);
+
+    return newState;
   }
 }
 
